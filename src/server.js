@@ -31,6 +31,16 @@ app.use(express.urlencoded({ extended: true }));
 const uploadsPath = path.resolve('uploads');
 app.use('/uploads', express.static(uploadsPath));
 
+// Root welcome endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    message: '🚀 Restaurant Bill Extractor & CRM Backend API is running successfully!',
+    healthCheck: '/api/health',
+    timestamp: new Date(),
+  });
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({
