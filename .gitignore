@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Uploads & temporary files
+uploads/*
+!uploads/.gitkeep
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.heic
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor directories
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
