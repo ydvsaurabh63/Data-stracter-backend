@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { Admin } from '../models/Admin.js';
+import { Client } from '../models/Client.js';
 
 export const protect = async (req, res, next) => {
   let token;
@@ -13,6 +14,9 @@ export const protect = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'super_secret_restaurant_admin_jwt_key_2026');
 
       req.admin = await Admin.findById(decoded.id).select('-password');
+      if (!req.admin) {
+        req.admin = await Client.findById(decoded.id).select('-password');
+      }
       return next();
     } catch (error) {
       console.error('[Auth Error]: Token verification failed', error.message);

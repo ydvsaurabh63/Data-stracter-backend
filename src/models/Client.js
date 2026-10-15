@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const clientSchema = new mongoose.Schema(
   {
@@ -18,6 +19,10 @@ const clientSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
+    },
+    password: {
+      type: String,
+      default: 'client123',
     },
     phone: {
       type: String,
@@ -45,5 +50,20 @@ const clientSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Encrypt password before saving
+clientSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) {
+    return next();
+  }
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+// Compare password method
+clientSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
+};
 
 export const Client = mongoose.model('Client', clientSchema);
