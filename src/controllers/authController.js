@@ -54,7 +54,38 @@ export const loginAdmin = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide both username/email and password' });
     }
 
-    // Support logging in with case-insensitive username or email
+    // 1. First check Client collection (clients created by admin)
+    const clientUser = await Client.findOne({
+      email: cleanInput.toLowerCase(),
+    });
+
+    if (clientUser) {
+      const isClientPasswordMatch = clientUser.matchPassword
+        ? await clientUser.matchPassword(cleanPassword)
+        : false;
+
+      if (!isClientPasswordMatch) {
+        return res.status(401).json({
+          success: false,
+          message: 'Invalid credentials. Incorrect password for this client account.',
+        });
+      }
+
+      return res.json({
+        success: true,
+        data: {
+          _id: clientUser._id,
+          clientId: clientUser._id,
+          username: clientUser.ownerName || clientUser.name,
+          email: clientUser.email,
+          role: 'client',
+          restaurantName: clientUser.name,
+          token: generateToken(clientUser._id),
+        },
+      });
+    }
+
+    // 2. Otherwise check Admin collection (Super Admin)
     const admin = await Admin.findOne({
       $or: [
         { email: cleanInput.toLowerCase() },
@@ -62,68 +93,26 @@ export const loginAdmin = async (req, res) => {
       ],
     });
 
-    let isMatch = false;
     if (admin) {
-      isMatch = await admin.matchPassword(password);
-      if (!isMatch && password !== cleanPassword) {
-        isMatch = await admin.matchPassword(cleanPassword);
-      }
-      // Allow both 'admin' and 'admin123' for default admin account
+      let isMatch = await admin.matchPassword(cleanPassword);
       if (!isMatch && admin.username === 'admin' && (cleanPassword === 'admin123' || cleanPassword === 'admin')) {
         isMatch = true;
       }
-      // Allow both 'client' and 'client123' for default client account
-      if (!isMatch && admin.username === 'client' && (cleanPassword === 'client123' || cleanPassword === 'client')) {
-        isMatch = true;
-      }
-    }
 
-    if (admin && isMatch) {
-      const isClient = admin.username.toLowerCase() === 'client' || admin.email.toLowerCase() === 'owner@grandspice.com' || admin.email.toLowerCase() === 'client@restaurant.com';
-      return res.json({
-        success: true,
-        data: {
-          _id: admin._id,
-          username: admin.username,
-          email: admin.email,
-          role: isClient ? 'client' : 'superadmin',
-          restaurantName: admin.restaurantName,
-          token: generateToken(admin._id),
-        },
-      });
-    }
+      if (isMatch) {
+        const isClientRole =
+          admin.username.toLowerCase() === 'client' ||
+          admin.email.toLowerCase() === 'owner@grandspice.com';
 
-    // 2. Also check Client collection for created restaurant client logins
-    const clientUser = await Client.findOne({
-      $or: [
-        { email: cleanInput.toLowerCase() },
-        { phone: cleanInput },
-      ],
-    });
-
-    if (clientUser) {
-      let clientMatch = false;
-      if (clientUser.matchPassword) {
-        clientMatch = await clientUser.matchPassword(password);
-        if (!clientMatch && password !== cleanPassword) {
-          clientMatch = await clientUser.matchPassword(cleanPassword);
-        }
-      }
-      if (!clientMatch && (cleanPassword === 'client' || cleanPassword === 'client123')) {
-        clientMatch = true;
-      }
-
-      if (clientMatch) {
         return res.json({
           success: true,
           data: {
-            _id: clientUser._id,
-            clientId: clientUser._id,
-            username: clientUser.ownerName || clientUser.name,
-            email: clientUser.email,
-            role: 'client',
-            restaurantName: clientUser.name,
-            token: generateToken(clientUser._id),
+            _id: admin._id,
+            username: admin.username,
+            email: admin.email,
+            role: isClientRole ? 'client' : 'superadmin',
+            restaurantName: admin.restaurantName,
+            token: generateToken(admin._id),
           },
         });
       }

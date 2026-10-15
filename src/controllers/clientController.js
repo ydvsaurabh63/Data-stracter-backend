@@ -87,6 +87,13 @@ export const createClient = async (req, res) => {
       });
     }
 
+    if (!password || !password.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Client login password is required',
+      });
+    }
+
     const existing = await Client.findOne({ email: email.toLowerCase().trim() });
     if (existing) {
       return res.status(400).json({
@@ -100,7 +107,7 @@ export const createClient = async (req, res) => {
       ownerName: ownerName.trim(),
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
-      password: password && password.trim() ? password.trim() : 'client123',
+      password: password.trim(),
       plan: plan || 'Pro',
       status: status || 'active',
       address: address || '',
@@ -133,9 +140,22 @@ export const updateClient = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Client not found' });
     }
 
+    if (email && email.toLowerCase().trim() !== client.email) {
+      const existing = await Client.findOne({
+        email: email.toLowerCase().trim(),
+        _id: { $ne: client._id },
+      });
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: 'Another client with this email already exists',
+        });
+      }
+      client.email = email.toLowerCase().trim();
+    }
+
     if (name) client.name = name.trim();
     if (ownerName) client.ownerName = ownerName.trim();
-    if (email) client.email = email.toLowerCase().trim();
     if (phone) client.phone = phone.trim();
     if (password && password.trim().length > 0) client.password = password.trim();
     if (plan) client.plan = plan;
