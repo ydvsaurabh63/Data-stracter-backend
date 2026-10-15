@@ -80,6 +80,7 @@ export const loginAdmin = async (req, res) => {
           email: clientUser.email,
           role: 'client',
           restaurantName: clientUser.name,
+          category: clientUser.category || 'Restaurant',
           token: generateToken(clientUser._id),
         },
       });
@@ -160,6 +161,7 @@ export const getAdminProfile = async (req, res) => {
           email: client.email,
           role: 'client',
           restaurantName: client.name,
+          category: client.category || 'Restaurant',
         },
       });
     }

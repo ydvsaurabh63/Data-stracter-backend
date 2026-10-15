@@ -78,7 +78,7 @@ export const getClientById = async (req, res) => {
 // @route   POST /api/admin/clients
 export const createClient = async (req, res) => {
   try {
-    const { name, ownerName, email, phone, password, plan, status, address, notes } = req.body;
+    const { name, ownerName, email, phone, password, category, plan, status, address, notes } = req.body;
 
     if (!name || !ownerName || !email || !phone) {
       return res.status(400).json({
@@ -108,6 +108,7 @@ export const createClient = async (req, res) => {
       email: email.toLowerCase().trim(),
       phone: phone.trim(),
       password: password.trim(),
+      category: category || 'Restaurant',
       plan: plan || 'Pro',
       status: status || 'active',
       address: address || '',
@@ -133,7 +134,7 @@ export const createClient = async (req, res) => {
 // @route   PUT /api/admin/clients/:id
 export const updateClient = async (req, res) => {
   try {
-    const { name, ownerName, email, phone, password, plan, status, address, notes } = req.body;
+    const { name, ownerName, email, phone, password, category, plan, status, address, notes } = req.body;
 
     const client = await Client.findById(req.params.id);
     if (!client) {
@@ -158,6 +159,7 @@ export const updateClient = async (req, res) => {
     if (ownerName) client.ownerName = ownerName.trim();
     if (phone) client.phone = phone.trim();
     if (password && password.trim().length > 0) client.password = password.trim();
+    if (category) client.category = category;
     if (plan) client.plan = plan;
     if (status) client.status = status;
     if (address !== undefined) client.address = address;

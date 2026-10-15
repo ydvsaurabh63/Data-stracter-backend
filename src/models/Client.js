@@ -29,6 +29,19 @@ const clientSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    category: {
+      type: String,
+      enum: [
+        'Restaurant',
+        'Cafe',
+        'Garments & Fashion',
+        'Hardware & Sanitary',
+        'Electronics & Mobile',
+        'Grocery & Supermarket',
+        'General Retail Store',
+      ],
+      default: 'Restaurant',
+    },
     plan: {
       type: String,
       enum: ['Starter', 'Pro', 'Enterprise'],
