@@ -6,25 +6,38 @@ import { sendCustomerNotification } from '../services/notificationService.js';
 export const broadcastOffer = async (req, res) => {
   try {
     const { customerIds, targetGroup, message, offerCode, discountPercent } = req.body;
+    const activeClientId = req.headers['x-client-id'] || req.admin?.clientId;
+    const baseQuery = {};
+    if (activeClientId) {
+      baseQuery.client = activeClientId;
+    }
 
     let targetCustomers = [];
 
     if (Array.isArray(customerIds) && customerIds.length > 0) {
-      targetCustomers = await Customer.find({ _id: { $in: customerIds } });
+      targetCustomers = await Customer.find({ ...baseQuery, _id: { $in: customerIds } });
     } else if (targetGroup) {
       const now = new Date();
       if (targetGroup === 'inactive') {
         const twentyDaysAgo = new Date(now.setDate(now.getDate() - 20));
-        targetCustomers = await Customer.find({ lastVisit: { $lte: twentyDaysAgo } });
+        targetCustomers = await Customer.find({ ...baseQuery, lastVisit: { $lte: twentyDaysAgo } });
       } else if (targetGroup === 'vip') {
-        targetCustomers = await Customer.find({ visitsCount: { $gte: 5 } });
+        targetCustomers = await Customer.find({ ...baseQuery, visitsCount: { $gte: 5 } });
       } else if (targetGroup === 'all') {
-        targetCustomers = await Customer.find();
+        targetCustomers = await Customer.find(baseQuery);
       }
     }
 
     if (targetCustomers.length === 0) {
-      return res.status(400).json({ success: false, message: 'No target customers found for this offer' });
+      let groupName = 'Registered';
+      if (targetGroup === 'inactive') groupName = 'Inactive (> 20 days)';
+      else if (targetGroup === 'vip') groupName = 'VIP Regular (5+ visits)';
+
+      return res.status(200).json({
+        success: false,
+        count: 0,
+        message: `Is group (${groupName}) me abhi koi customer nahi hai. Pehle bill scan karke customer add karein ya "All Registered Customers" select karein.`,
+      });
     }
 
     // Send notifications
