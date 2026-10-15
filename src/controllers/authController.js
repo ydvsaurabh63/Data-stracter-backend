@@ -112,6 +112,69 @@ export const getAdminProfile = async (req, res) => {
   }
 };
 
+// @desc    Update admin profile
+// @route   PUT /api/auth/profile
+export const updateAdminProfile = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.admin._id);
+
+    if (!admin) {
+      return res.status(404).json({ success: false, message: 'Admin user not found' });
+    }
+
+    const { username, email, password, restaurantName } = req.body;
+
+    // Check if new username is taken
+    if (username && username.trim() !== admin.username) {
+      const usernameExists = await Admin.findOne({
+        username: username.trim(),
+        _id: { $ne: admin._id },
+      });
+      if (usernameExists) {
+        return res.status(400).json({ success: false, message: 'Username is already taken' });
+      }
+      admin.username = username.trim();
+    }
+
+    // Check if new email is taken
+    if (email && email.trim().toLowerCase() !== admin.email) {
+      const emailExists = await Admin.findOne({
+        email: email.trim().toLowerCase(),
+        _id: { $ne: admin._id },
+      });
+      if (emailExists) {
+        return res.status(400).json({ success: false, message: 'Email is already registered' });
+      }
+      admin.email = email.trim().toLowerCase();
+    }
+
+    if (restaurantName !== undefined) {
+      admin.restaurantName = restaurantName.trim();
+    }
+
+    if (password && password.trim().length > 0) {
+      admin.password = password.trim();
+    }
+
+    const updatedAdmin = await admin.save();
+
+    res.json({
+      success: true,
+      message: 'Profile updated successfully!',
+      data: {
+        _id: updatedAdmin._id,
+        username: updatedAdmin.username,
+        email: updatedAdmin.email,
+        restaurantName: updatedAdmin.restaurantName,
+        token: generateToken(updatedAdmin._id),
+      },
+    });
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Ensure admin and client accounts exist
 export const ensureDefaultAdmin = async () => {
   try {
