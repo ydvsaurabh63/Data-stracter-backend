@@ -94,6 +94,13 @@ export const createClient = async (req, res) => {
       });
     }
 
+    if (!category) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please select a Business Category',
+      });
+    }
+
     const existing = await Client.findOne({ email: email.toLowerCase().trim() });
     if (existing) {
       return res.status(400).json({
