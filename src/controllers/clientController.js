@@ -222,9 +222,14 @@ export const ensureDefaultClients = async () => {
         status: 'active',
         address: 'Connaught Place, New Delhi',
         notes: 'Primary Default Restaurant Client',
+        password: 'client',
       });
       console.log(`[Multi-tenant]: Created default client "${defaultClient.name}" (${defaultClient._id})`);
+    } else if (!defaultClient.password) {
+      defaultClient.password = 'client';
+      await defaultClient.save();
     }
+
 
     // Attach any unassigned bills to default client
     const billsUpdated = await Bill.updateMany(
