@@ -84,9 +84,11 @@ export const getCustomerDetails = async (req, res) => {
           totalVisits: customer.visitsCount,
           totalSpent: customer.totalSpent,
           averageBill: customer.averageBillValue,
-          firstVisit: customer.firstVisit,
-          lastVisit: customer.lastVisit,
-          daysSinceLastVisit: Math.floor((new Date() - new Date(customer.lastVisit)) / (1000 * 60 * 60 * 24)),
+          firstVisit: customer.firstVisit || customer.createdAt,
+          lastVisit: customer.lastVisit || customer.createdAt,
+          daysSinceLastVisit: customer.lastVisit
+            ? Math.floor((new Date() - new Date(customer.lastVisit)) / (1000 * 60 * 60 * 24))
+            : 0,
         },
       },
     });

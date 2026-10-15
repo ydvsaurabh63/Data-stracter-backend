@@ -33,8 +33,11 @@ export const scanAndExtractBill = async (req, res) => {
     let existingCustomer = null;
     const cleanPhone = extractionResult.customerPhone ? extractionResult.customerPhone.slice(-10) : '';
 
+    const clientId = req.headers['x-client-id'] || req.body?.clientId;
     if (cleanPhone) {
-      existingCustomer = await Customer.findOne({ phone: cleanPhone });
+      const matchQuery = { phone: cleanPhone };
+      if (clientId) matchQuery.client = clientId;
+      existingCustomer = await Customer.findOne(matchQuery);
     }
 
     res.json({

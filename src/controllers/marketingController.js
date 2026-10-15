@@ -19,7 +19,7 @@ export const broadcastOffer = async (req, res) => {
     } else if (targetGroup) {
       const now = new Date();
       if (targetGroup === 'inactive') {
-        const twentyDaysAgo = new Date(now.setDate(now.getDate() - 20));
+        const twentyDaysAgo = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000);
         targetCustomers = await Customer.find({ ...baseQuery, lastVisit: { $lte: twentyDaysAgo } });
       } else if (targetGroup === 'vip') {
         targetCustomers = await Customer.find({ ...baseQuery, visitsCount: { $gte: 5 } });
