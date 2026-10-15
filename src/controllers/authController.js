@@ -138,12 +138,44 @@ export const loginAdmin = async (req, res) => {
   }
 };
 
-// @desc    Get admin profile
+// @desc    Get admin/client profile
 // @route   GET /api/auth/me
 export const getAdminProfile = async (req, res) => {
   try {
     const admin = await Admin.findById(req.admin._id).select('-password');
-    res.json({ success: true, data: admin });
+    if (admin) {
+      const isClient =
+        admin.username?.toLowerCase() === 'client' ||
+        admin.email?.toLowerCase() === 'owner@grandspice.com' ||
+        admin.email?.toLowerCase() === 'client@restaurant.com';
+      return res.json({
+        success: true,
+        data: {
+          _id: admin._id,
+          username: admin.username,
+          email: admin.email,
+          role: isClient ? 'client' : 'superadmin',
+          restaurantName: admin.restaurantName,
+        },
+      });
+    }
+
+    const client = await Client.findById(req.admin._id).select('-password');
+    if (client) {
+      return res.json({
+        success: true,
+        data: {
+          _id: client._id,
+          clientId: client._id,
+          username: client.ownerName || client.name,
+          email: client.email,
+          role: 'client',
+          restaurantName: client.name,
+        },
+      });
+    }
+
+    res.status(404).json({ success: false, message: 'User not found' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
